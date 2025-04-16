@@ -1,0 +1,569 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Slide Viewer</title>
+    <meta name="viewport" content="user-scalable=no">
+    <link rel="icon" href="{{ url_for('static', path='/images/favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}" type="text/css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .box {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .sidebar {
+            width: fit-content;
+            position: sticky;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 0 5px 5px 0;
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .sidebar button {
+            display: block;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .sidebar button:hover {
+            background: #e6e6e6;
+        }
+
+        .mian {
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* 简单布局示例：左侧显示图像，占页面一半宽度 */
+        #menu {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+        }
+
+        .options-box {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        #options {
+            margin: 0;
+        }
+
+        .coordDisplayBox {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: row;
+            height: calc(100vh - 110px);
+            padding: 10px;
+            gap: 10px;
+        }
+
+        #leftView {
+            width: 50%;
+            height: 100%;
+            border: 1px solid #000000;
+        }
+
+        #rightView {
+            width: 50%;
+            height: 100%;
+            border: 1px solid #000000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <div class="sidebar" style="display: flex; flex-direction: column;">
+            <button id="homeBtn" onclick="window.location.href='https://36.158.228.122:45727/'">Home page</button>
+            <button id="measureBtn" onclick="window.location.reload()">Distance measurement</button>
+        </div>
+        <div class="mian">
+            <div id="menu">
+                <div>
+                    <button id="measureToggleBtnleft">Turn on ranging</button>
+                    <button id="clearCanvasBtnleft">Reset</button>
+                    <span id="newDivInRightViewerleft">Distance: Not measured yet</span>
+                </div>
+                <div class="options-box">
+                    <form id="options" action="" method="get">
+                        <select id="slide" name="slide" onchange="window.location.href=this.value;">
+                            <option value="" selected disabled hidden>Choose a slide</option>
+                            {% for entry in root_dir.children recursive %}
+                            {% if entry.name == curr_slide %}
+                            <option value="{{ url_for('slide', path=entry.url_path) }}" selected>{{ entry.name }}
+                            </option>
+                            {% else %}
+                            <option value="{{ url_for('slide', path=entry.url_path) }}">{{ entry.name }}</option>
+                            {% endif %}
+                            {% if entry.children %}
+                            {{ loop(entry.children) }}
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </form>
+                    <button id="hideLeftCanvasBtn">Turn off automatic hiding of left view distance lines</button>
+                    <label for="colorPicker">Distance measurement point</label>
+                    <input type="color" id="colorPicker" value="#ff0000" title="Select the color of the distance point">
+                    <label for="lineColorPicker">Distance measurement line</label>
+                    <input type="color" id="lineColorPicker" value="#0000ff"
+                        title="Select the color of the distance line">
+                </div>
+
+                <div>
+                    <button id="measureToggleBtnright">Turn on ranging</button>
+                    <button id="clearCanvasBtnright">Reset</button>
+                    <span id="newDivInRightViewerright">Distance: Not measured yet</span>
+                </div>
+            </div>
+            <div class="coordDisplayBox">
+                <div id="coordDisplay">
+                    <label for="coordX">x:</label>
+                    <input type="text" placeholder="0" id="coordX" size="10" readonly>
+                    <label for="coordY">y:</label>
+                    <input type="text" placeholder="0" id="coordY" size="10" readonly>
+                </div>
+                <div id="rightCoordDisplay">
+                    <label for="rightCoordX">x:</label>
+                    <input type="text" placeholder="0" id="rightCoordX" size="10" readonly>
+                    <label for="rightCoordY">y:</label>
+                    <input type="text" placeholder="0" id="rightCoordY" size="10" readonly>
+                </div>
+            </div>
+            <div id="container">
+                <!-- 左侧视图：OpenSeadragon 显示 DZI 图像 -->
+                <div id="leftView">
+                </div>
+
+                <!-- 右侧视图：PNG 图像选择和预览 -->
+                <div id="rightView">
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', path='/jquery.js') }}"></script>
+    <script src="{{ url_for('static', path='/openseadragon/openseadragon.js') }}"></script>
+    <script src="{{ url_for('static', path='/openseadragon/openseadragon-scalebar.js') }}"></script>
+    <script type="text/javascript">
+        $(function () {
+            var mpp = parseFloat("{{ slide_mpp }}");
+            var mpp1 = parseFloat("{{ slide_mpp1 }}");
+            var leftViewer = OpenSeadragon({
+                id: "leftView",
+                tileSources: "{{ slide_url }}",
+                prefixUrl: "{{ url_for('static', path='/openseadragon/images/') }}",
+                showNavigator: true,
+                showRotationControl: true,
+                constrainDuringPan: true,
+                maxZoomPixelRatio: 2,
+                minZoomImageRatio: 1,
+                visibilityRatio: 1,
+                zoomPerScroll: 2,
+                timeout: 120000,
+            });
+            // 初始化右侧PNG图片视图
+            var rightViewer = OpenSeadragon({
+                id: "rightView",
+                tileSources: "{{ slide_urlright }}",
+                prefixUrl: "{{ url_for('static', path='/openseadragon/images/') }}",
+                showNavigator: false,
+                showRotationControl: false,
+                showNavigationControl: false,
+                showHomeControl: false,
+                showFullPageControl: true,
+                showZoomControl: false,
+                constrainDuringPan: false,
+                maxZoomPixelRatio: 2,
+                minZoomImageRatio: 1,
+                visibilityRatio: 0.75,
+                zoomPerScroll: 2,
+                timeout: 120000,
+                gestureSettingsMouse: {
+                    clickToZoom: false,
+                    dblClickToZoom: false,
+                    pinchToZoom: false,
+                    scrollToZoom: false
+                },
+                gestureSettingsTouch: {
+                    pinchToZoom: false,
+                    scrollToZoom: false
+                }
+            });
+
+            document.getElementById("leftView").querySelectorAll("div:not(.openseadragon-canvas)").forEach(function (element) {
+                element.style.zIndex = 1;
+            })
+            let points = [];
+            let unit = 'mm';
+
+            leftViewer.addHandler('zoom', function (event) {
+                var center = leftViewer.viewport.getCenter();
+                rightViewer.viewport.zoomTo(event.zoom);
+                rightViewer.viewport.panTo(center);
+                rightViewer.viewport.applyConstraints();
+
+                if (points.length === 2) {
+                    var webPoint1 = points[0];
+                    var webPoint2 = points[1];
+                    var viewportPoint1 = rightViewer.viewport.pointFromPixel(webPoint1);
+                    var viewportPoint2 = rightViewer.viewport.pointFromPixel(webPoint2);
+                    var imagePoint1 = rightViewer.world.getItemAt(0).viewportToImageCoordinates(viewportPoint1);
+                    var imagePoint2 = rightViewer.world.getItemAt(0).viewportToImageCoordinates(viewportPoint2);
+                    var distance = Math.sqrt(Math.pow(imagePoint2.x - imagePoint1.x, 2) + Math.pow(imagePoint2.y - imagePoint1.y, 2));
+                    var pixelsPerMeter = mpp ? (1e6 / mpp) : 0;
+                    var actualDistance = distance / pixelsPerMeter * 1000;
+                    (async function () {
+                        await checkForMM('left');
+                        // 微米再乘以1000
+                        var displayDistance = unit === 'μm' ? actualDistance * 1000 : actualDistance;
+                        document.getElementById('newDivInRightViewerleft').innerHTML = 'Distance:' + displayDistance.toFixed(2) + ' ' + unit;
+                    })()
+                }
+            });
+
+            leftViewer.addHandler('pan', function (event) {
+                rightViewer.viewport.panTo(event.center);
+                rightViewer.viewport.applyConstraints();
+            });
+
+            // 同步旋转
+            leftViewer.addHandler('rotate', function (event) {
+                rightViewer.viewport.setRotation(event.degrees);
+            });
+
+            // 添加比例尺
+            leftViewer.scalebar({
+                pixelsPerMeter: mpp ? (1e6 / mpp) : 0,
+                xOffset: 10,
+                yOffset: 10,
+                barThickness: 3,
+                color: '#555555',
+                fontColor: '#333333',
+                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            })
+
+            rightViewer.scalebar({
+                pixelsPerMeter: mpp1 ? (1e6 / mpp1) : 0,
+                xOffset: 10,
+                yOffset: 10,
+                barThickness: 3,
+                fontColor: '#333333',
+                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            });
+
+            // 显示鼠标所在图像坐标
+            leftViewer.addHandler('open', function () {
+                var tracker = new OpenSeadragon.MouseTracker({
+                    element: leftViewer.container,
+                    moveHandler: function (event) {
+                        var webPoint = event.position;
+                        var viewportPoint = leftViewer.viewport.pointFromPixel(webPoint);
+                        var imagePoint = leftViewer.world.getItemAt(0).viewportToImageCoordinates(viewportPoint);
+                        document.getElementById("coordX").value = imagePoint.x.toFixed(2);
+                        document.getElementById("coordY").value = imagePoint.y.toFixed(2);
+                    }
+                });
+                tracker.setTracking(true);
+
+            });
+
+            // 显示鼠标所在图像坐标
+            rightViewer.addHandler('open', function () {
+                var tracker = new OpenSeadragon.MouseTracker({
+                    element: rightViewer.container,
+                    moveHandler: function (event) {
+                        var webPoint = event.position;
+                        var viewportPoint = rightViewer.viewport.pointFromPixel(webPoint);
+                        var imagePoint = rightViewer.world.getItemAt(0).viewportToImageCoordinates(viewportPoint);
+                        document.getElementById("rightCoordX").value = imagePoint.x.toFixed(2);
+                        document.getElementById("rightCoordY").value = imagePoint.y.toFixed(2);
+                    }
+                });
+                tracker.setTracking(true);
+            })
+
+            // 右视图测距
+            var rightcanvas = document.createElement('canvas');
+            rightcanvas.width = rightViewer.container.clientWidth;
+            rightcanvas.height = rightViewer.container.clientHeight;
+            rightcanvas.style.position = 'absolute';
+            rightcanvas.style.top = '0';
+            rightcanvas.style.left = '0';
+            rightcanvas.id = 'rightCanvas';
+            rightViewer.container.appendChild(rightcanvas);
+            var rightCtx = rightcanvas.getContext('2d');
+
+            // 左视图测距
+            var leftCanvas = document.createElement('canvas');
+            leftCanvas.width = leftViewer.container.clientWidth;
+            leftCanvas.height = leftViewer.container.clientHeight;
+            leftCanvas.style.position = 'absolute';
+            leftCanvas.style.top = '0';
+            leftCanvas.style.left = '0';
+            leftCanvas.id = 'leftCanvas';
+            leftViewer.container.appendChild(leftCanvas);
+            var leftCtx = leftCanvas.getContext('2d');
+
+            // 控制是否自动隐藏测距画布
+            let isAutoHide = true;
+            const hideLeftCanvasBtn = document.getElementById('hideLeftCanvasBtn')
+            hideLeftCanvasBtn.addEventListener('click', function () {
+                isAutoHide = !isAutoHide;
+                hideLeftCanvasBtn.textContent = isAutoHide ? 'Turn off automatic hiding of left view distance lines' : 'Turn on automatic hiding of left view distance lines';
+            });
+
+            // 隐藏测距画布
+            leftCanvas.addEventListener('mouseenter', function () {
+                if (isAutoHide) {
+                    this.style.display = "none";
+                }
+            });
+
+            // 左测距
+            leftViewer.addHandler('canvas-click', function (event) {
+                document.getElementById('newDivInRightViewerleft').textContent = 'Distance measurement in progress';
+                if (points.length === 2) {
+                    leftCtx.clearRect(0, 0, leftCanvas.width, leftCanvas.height);
+                    points = [];
+                    document.getElementById('newDivInRightViewerleft').textContent = 'Next distance measurement in progress';
+                }
+                var webPoint = event.position;
+                var viewportPoint = leftViewer.viewport.pointFromPixel(webPoint);
+                var imagePoint = leftViewer.world.getItemAt(0).viewportToImageCoordinates(viewportPoint);
+                var canvasPoint = webPoint;
+
+                points.push(canvasPoint);
+
+                leftCtx.beginPath();
+                leftCtx.arc(points[0].x, points[0].y, 5, 0, 2 * Math.PI);
+                leftCtx.fillStyle = document.getElementById('colorPicker').value;
+                leftCtx.fill();
+                if (points.length === 2) {
+                    // 清除第一个测距点,避免重画时产生重叠
+                    leftCtx.clearRect(0, 0, leftCanvas.width, leftCanvas.height);
+                    // 计算右视图两点之间的距离并显示
+                    leftCtx.beginPath();
+                    leftCtx.moveTo(points[0].x, points[0].y);
+                    leftCtx.lineTo(points[1].x, points[1].y);
+                    leftCtx.strokeStyle = document.getElementById('lineColorPicker').value;
+                    leftCtx.stroke();
+
+                    // 再绘制两个圆点覆盖
+                    leftCtx.beginPath();
+                    leftCtx.arc(points[0].x, points[0].y, 5, 0, 2 * Math.PI);
+                    leftCtx.fillStyle = document.getElementById('colorPicker').value;
+                    leftCtx.fill();
+                    leftCtx.beginPath();
+                    leftCtx.arc(points[1].x, points[1].y, 5, 0, 2 * Math.PI);
+                    leftCtx.fillStyle = document.getElementById('colorPicker').value;
+                    leftCtx.fill();
+
+                    var webPoint1 = points[0];
+                    var webPoint2 = points[1];
+                    var viewportPoint1 = leftViewer.viewport.pointFromPixel(webPoint1);
+                    var viewportPoint2 = leftViewer.viewport.pointFromPixel(webPoint2);
+                    var imagePoint1 = leftViewer.world.getItemAt(0).viewportToImageCoordinates(viewportPoint1);
+                    var imagePoint2 = leftViewer.world.getItemAt(0).viewportToImageCoordinates(viewportPoint2);
+                    var distance = Math.sqrt(Math.pow(imagePoint2.x - imagePoint1.x, 2) + Math.pow(imagePoint2.y - imagePoint1.y, 2));
+                    var pixelsPerMeter = mpp ? (1e6 / mpp) : 0;
+                    var actualDistance = distance / pixelsPerMeter * 1000;
+                    (async function () {
+                        await checkForMM('left');
+                        // 微米再乘以1000
+                        var displayDistance = unit === 'μm' ? actualDistance * 1000 : actualDistance;
+                        document.getElementById('newDivInRightViewerleft').innerHTML = 'Distance:' + displayDistance.toFixed(2) + ' ' + unit;
+                    })()
+                }
+            });
+            // 右测距
+            rightViewer.addHandler('canvas-click', function (event) {
+                document.getElementById('newDivInRightViewerright').textContent = 'Distance measurement in progress';
+                if (points.length === 2) {
+                    rightCtx.clearRect(0, 0, rightcanvas.width, rightcanvas.height);
+                    points = [];
+                    document.getElementById('newDivInRightViewerright').textContent = 'Next distance measurement in progress';
+                }
+                var webPoint = event.position;
+                var viewportPoint = rightViewer.viewport.pointFromPixel(webPoint);
+                var imagePoint = rightViewer.world.getItemAt(0).viewportToImageCoordinates(viewportPoint);
+                var canvasPoint = webPoint;
+
+                points.push(canvasPoint);
+
+                rightCtx.beginPath();
+                rightCtx.arc(points[0].x, points[0].y, 5, 0, 2 * Math.PI);
+                rightCtx.fillStyle = document.getElementById('colorPicker').value;
+                rightCtx.fill();
+                if (points.length === 2) {
+                    // 清除第一个测距点,避免重画时产生重叠
+                    rightCtx.clearRect(0, 0, rightcanvas.width, rightcanvas.height);
+                    // 计算右视图两点之间的距离并显示
+                    rightCtx.beginPath();
+                    rightCtx.moveTo(points[0].x, points[0].y);
+                    rightCtx.lineTo(points[1].x, points[1].y);
+                    rightCtx.strokeStyle = document.getElementById('lineColorPicker').value;
+                    rightCtx.stroke();
+
+                    // 再绘制两个圆点覆盖
+                    rightCtx.beginPath();
+                    rightCtx.arc(points[0].x, points[0].y, 5, 0, 2 * Math.PI);
+                    rightCtx.fillStyle = document.getElementById('colorPicker').value;
+                    rightCtx.fill();
+                    rightCtx.beginPath();
+                    rightCtx.arc(points[1].x, points[1].y, 5, 0, 2 * Math.PI);
+                    rightCtx.fillStyle = document.getElementById('colorPicker').value;
+                    rightCtx.fill();
+
+                    var webPoint1 = points[0];
+                    var webPoint2 = points[1];
+                    var viewportPoint1 = rightViewer.viewport.pointFromPixel(webPoint1);
+                    var viewportPoint2 = rightViewer.viewport.pointFromPixel(webPoint2);
+                    var imagePoint1 = rightViewer.world.getItemAt(0).viewportToImageCoordinates(viewportPoint1);
+                    var imagePoint2 = rightViewer.world.getItemAt(0).viewportToImageCoordinates(viewportPoint2);
+                    var distance = Math.sqrt(Math.pow(imagePoint2.x - imagePoint1.x, 2) + Math.pow(imagePoint2.y - imagePoint1.y, 2));
+                    var pixelsPerMeter = mpp1 ? (1e6 / mpp1) : 0;
+                    var actualDistance = distance / pixelsPerMeter * 1000;
+                    (async function () {
+                        await checkForMM('right');
+                        // 微米再乘以1000
+                        var displayDistance = unit === 'μm' ? actualDistance * 1000 : actualDistance;
+                        document.getElementById('newDivInRightViewerright').innerHTML = 'Distance:' + displayDistance.toFixed(2) + ' ' + unit;
+                    })()
+                }
+            });
+
+            var isMeasuringleft = false;
+            var isMeasuringright = false;
+
+            var clearCanvasBtnleft = document.getElementById('clearCanvasBtnleft');
+            clearCanvasBtnleft.addEventListener('click', function () {
+                leftCtx.clearRect(0, 0, leftCanvas.width, leftCanvas.height);
+                points = [];
+                checkForMM('left');
+                document.getElementById('newDivInRightViewerleft').textContent = `Distance:0${unit}`;
+            });
+            var clearCanvasBtnright = document.getElementById('clearCanvasBtnright');
+            clearCanvasBtnright.addEventListener('click', function () {
+                rightCtx.clearRect(0, 0, rightcanvas.width, rightcanvas.height);
+                points = [];
+                checkForMM('right');
+                document.getElementById('newDivInRightViewerright').textContent = `Distance:0${unit}`;
+            });
+
+            var measureBtnleft = document.getElementById('measureToggleBtnleft');
+            measureBtnleft.addEventListener('click', function () {
+                isMeasuringleft = !isMeasuringleft;
+                this.textContent = isMeasuringleft ? 'Turn off ranging' : 'Turn on ranging';
+            });
+            var measureBtnright = document.getElementById('measureToggleBtnright');
+            measureBtnright.addEventListener('click', function () {
+                isMeasuringright = !isMeasuringright;
+                this.textContent = isMeasuringright ? 'Turn off ranging' : 'Turn on ranging';
+            });
+
+            leftCanvas.addEventListener('click', function (event) {
+                if (!isMeasuringleft) return;
+                var rect = leftCanvas.getBoundingClientRect();
+                var x = event.clientX - rect.left;
+                var y = event.clientY - rect.top;
+                leftViewer.raiseEvent('canvas-click', { position: new OpenSeadragon.Point(x, y) });
+            });
+
+            rightcanvas.addEventListener('click', function (event) {
+                if (!isMeasuringright) return;
+                var rect = rightcanvas.getBoundingClientRect();
+                var x = event.clientX - rect.left;
+                var y = event.clientY - rect.top;
+                rightViewer.raiseEvent('canvas-click', { position: new OpenSeadragon.Point(x, y) });
+            });
+
+            // 获取比例尺单位
+            function checkForMM(view) {
+                if (view === 'left') {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            var leftView = document.getElementById('leftView');
+                            var allElements = leftView.getElementsByTagName('*');
+                            for (var i = 0; i < allElements.length; i++) {
+                                for (var j = 0; j < allElements[i].childNodes.length; j++) {
+                                    if (allElements[i].childNodes[j].nodeType === Node.TEXT_NODE && allElements[i].childNodes[j].nodeValue.trim().includes('mm')) {
+                                        resolve(unit = 'mm');
+                                        return;
+                                    }
+                                }
+                            }
+                            resolve(unit = 'μm');
+                        }, 500);
+                    });
+                } else {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            var rightView = document.getElementById('rightView');
+                            var allElements = rightView.getElementsByTagName('*');
+                            for (var i = 0; i < allElements.length; i++) {
+                                for (var j = 0; j < allElements[i].childNodes.length; j++) {
+                                    if (allElements[i].childNodes[j].nodeType === Node.TEXT_NODE && allElements[i].childNodes[j].nodeValue.trim().includes('mm')) {
+                                        resolve(unit = 'mm');
+                                        return;
+                                    }
+                                }
+                            }
+                            resolve(unit = 'μm');
+                        }, 500);
+                    });
+                }
+            }
+
+            // 清除测距画布
+            function clearCanvas() {
+                var rightCanvas = document.getElementById('rightCanvas');
+                var leftCanvas = document.getElementById('leftCanvas');
+                var rightCanvasCtx = rightCanvas.getContext('2d');
+                var leftCanvasCtx = leftCanvas.getContext('2d');
+                rightCanvasCtx.clearRect(0, 0, rightCanvas.width, rightCanvas.height);
+                leftCanvasCtx.clearRect(0, 0, leftCanvas.width, leftCanvas.height);
+            }
+        });
+
+        window.onload = function () {
+            setTimeout(function () {
+                var openseadragonContainer = document.querySelector('#leftView .openseadragon-container');
+                // 显示测距画布
+                openseadragonContainer.addEventListener('mouseleave', function () {
+                    var leftCanvas = document.getElementById('leftCanvas');
+                    leftCanvas.style.display = '';
+                });
+            })
+        };
+    </script>
+</body>
+
+</html>
