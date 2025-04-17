@@ -74,7 +74,7 @@ python extract_features_fp.py
 **SMILE**
 
   <a href="(https://github.com/panliangrui/DAEM/blob/main/images/Figure1.jpg)">
-    <img src="https://github.com/panliangrui/DAEM/blob/main/images/Figure1.jpg" width="4563" height="5131" />
+    <img src="https://github.com/panliangrui/DAEM/blob/main/images/Figure1.jpg" width="456" height="513" />
   </a>
 
 Workflow of collection and organization of lung cancer STAS dataset, model training and inference, and multi-center validation. a, Resection of lung tumor tissue. b, Digitization of FSs and PSs. c, Histopathology image slice processing, d, Pathologists’ triple cross-validation to annotate data. e, Extraction of multi-scale histopathology image features and parallel expert models to diagnose and localize STAS in histopathology images. f, Details of the expert module, where AMP1d is the AdaptiveMaxPool1d layer. g, Details of the classifier. h, Distribution and quantity of multi-center data.
