@@ -1,8 +1,8 @@
 
 
 <div align="center">
-  <a href="(https://github.com/panliangrui/IJCAI25/blob/main/STAS.jpg)">
-    <img src="https://github.com/panliangrui/IJCAI25/blob/main/STAS.jpg" width="800" height="400" />
+  <a href="(https://github.com/panliangrui/DAEM/blob/main/images/predict.png)">
+    <img src="https://github.com/panliangrui/DAEM/blob/main/images/predict.png" width="800" height="400" />
   </a>
 
   <h1>STAS(solid nests, micropapillary clusters, single cells)</h1>
