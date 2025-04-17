@@ -7,8 +7,15 @@
 
   <h1>STAS Diagnostic Platform(https://36.158.228.122:45727/)</h1>
 
+  <a href="(https://github.com/panliangrui/DAEM/blob/main/images/distance.png)">
+    <img src="https://github.com/panliangrui/DAEM/blob/main/images/distance.png" width="800" height="400" />
+  </a>
+
+  <h1>STAS Diagnostic Platform(https://113.219.237.106:34040/)</h1>
+
+  
   <p>
-  Anonymous Author et al. is a developer helper.
+  Liangrui Pan et al. is a developer helper.
   </p>
 
   <p>
