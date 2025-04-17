@@ -86,41 +86,20 @@ Workflow of collection and organization of lung cancer STAS dataset, model train
 
 
 **Test WSI**
-
-This repository provides implementations and comparisons of various MIL-based methods for Whole Slide Image (WSI) classification.
-
-- **Maxpooling**: Represents a slide by selecting the instance with the maximum activation, thereby mimicking the focus on the most prominent lesion.
-- **Meanpooling**: Aggregates all instance features by computing their mean, thus treating each patch equally in the overall representation.
-- **ABMIL**: Employs an attention mechanism to assign weights to instances, effectively prioritizing diagnostically relevant regions.
-- **TransMIL**: A transformer-based MIL framework that leverages both morphological and spatial correlations among instances to enhance visualization, interpretability, and performance in WSI pathology classification.
-- **CLAM-SB**: A clustering constraint-based attention MIL method that employs a single attention branch to aggregate instance features and generate a bag-level representation.
-- **CLAM-MB**: The multi-branch version of the CLAM model, computing attention scores for each class separately to produce multiple unique bag-level representations.
-- **DTFD-MIL**: Addresses the challenge of limited WSI samples in MIL by introducing pseudo-bags to virtually enlarge the bag count and implementing a double-tier framework that leverages an attention-based derivation of instance probabilities to effectively utilize intrinsic features.
-- **ACMIL**: Mitigates overfitting by employing multiple branch attention and stochastic top-K instance masking to reduce attention value concentration and capture more discriminative instances in WSI classification.
-- **ILRA**: Incorporates a pathology-specific Low-Rank Constraint for feature embedding and an iterative low-rank attention model for feature aggregation, achieving enhanced performance in gigapixel-sized WSI classification.
-- **DGRMIL**: Models instance diversity by converting instance embeddings into similarities with predefined global vectors via a cross-attention mechanism and further enhances the diversity among these global vectors through positive instance alignment and a determinant point process-based diversified learning paradigm.
-
-## Train Models
 ```markdown
-python manage.py
+python test_STAS.py
 ```
-
 
 ## Datastes
 
 - Only features of the histopathology image data are provided as the data has a privacy protection agreement.
 ```markdown
-link: https://pan.baidu.com/s/1nm9IJ817UpMmc1h6d0zxPw?pwd=h45j password: h45j 
+Data access is available upon request via email(lip141772@gmail.com).
 ```
-- We provide clinical data on STAS patients, including patient age, gender, stage and protein level expression data.
-Please contact the corresponding author or first author by email.
-- STAS_CSU: From April 2020 to December 2023, we selected 356 patients at the Second Xiangya Hospital who underwent pulmonary nodule resection and were diagnosed with lung cancer (particularly those with STAS) to form a retrospective lung cancer cohort. We comprehensively collected each patient's clinical and pathological data, including age, tumor size, lymph node metastasis, distant metastasis, clinical stage, recurrence, and survival status. Two experienced pathologists independently reviewed the pathology data for every patient, including frozen and paraffin H\&E slides as well as immunohistochemical (IHC) slides, confirming the presence or absence of STAS, the specific pathological subtype of any disseminated foci, the detailed histological subtype of lung cancer, and the expression of key proteins (PD-L1, TP53, Ki-67, and ALK). Within this cohort, there were 150 non-STAS patients and 206 STAS patients. Each patient's tumor specimen was sectioned by pathologists into multiple paraffin blocks, each corresponding to multiple H\&E slides. In total, we collected and scanned 1{,}290 frozen and paraffin slides and 1{,}436 IHC slides. Of these, 247 frozen slides comprised 81 STAS and 158 non-STAS histopathological images, while 1{,}043 paraffin slides contained 585 STAS and 436 non-STAS images. These slides were divided into two sets for internal validation and testing of our model. Furthermore, this dataset includes survival time and status for all patients.
+In this retrospective, multi-center study, we utilized anonymized hematoxylin and eosin (H&E) stained lung cancer slides from six hospitals and two projects in China and the United States, constructing nine cohorts for model training and validation. Based on our research objectives, only patients meeting the following criteria were included: (1) diagnosed with lung adenocarcinoma (LUAD); (2) corresponding routine pathological slices, including primary tumor tissue and adjacent non-tumor tissue; (3) detailed TNM staging; (4) high-quality slides, such as those without bending, wrinkling, blurring, or color changes; (5) absence of tumor cells randomly distributed, with irregular pericellular nests typically located at the tissue slice edge or outside the tissue slice; (6) absence of tumor cell continuity spreading from the tumor edge to the most distant airway; (7) absence of benign cytological features of lung epithelial cells or bronchial cells and/or presence of cilia; (8) absence of linear cellular strips detached from the alveolar wall in histopathological images. Two experienced pathologists, using microscopes and adhering to double-blind principles with cross-validation, labeled STAS (spread through air spaces) for each whole-slide image (WSI) to ensure accuracy and reduce subjectivity, missed diagnoses, or overdiagnosis. We included WSIs from the cohort of the Second Xiangya Hospital of Central South University (SXH-CSU) as internal training and validation data. This cohort selected 550 patients diagnosed with STAS and 170 patients without STAS from 12169 patients who underwent lung nodule resection at the Second Xiangya Hospital between April 2020 and December 2023. The experiment collected 2,494 WSIs (including 435 FSs and 2,057 PSs), immunohistochemical image data, and related clinical information from the selected patients.
 
-- STAS_ZZU: From June 2023 to the present, the Affiliated Tumor Hospital of Zhengzhou University and Henan Cancer Hospital collected 100 paraffin sections from 20 STAS patients. According to the inclusion and exclusion criteria set by pathologists, 91 histopathological images were retained. All WSIs were annotated by pathologists to indicate STAS presence, dissemination focus type, and tumor type. Among these WSIs, 60 were STAS and 31 were non-STAS, forming a small-scale STAS dataset.
 
-- STAS_TCGA:} We downloaded relevant LUAD WSIs from the TCGA website {https://portal.gdc.cancer.gov/}. Based on our inclusion and exclusion standards, we collected 506 paraffin sections from an unspecified number of patients. All WSIs underwent cross-verification by two experienced pathologists to determine STAS status, type of dissemination foci, and tumor type. Finally, following the inclusion and exclusion criteria, the STAS\_TCGA dataset consists of 117 STAS WSIs and 115 non-STAS WSIs, along with corresponding patient survival times and statuses.
-
-- STAS_CPTAC: We obtained 1{,}139 paraffin sections from the CPTAC{https://www.cancerimagingarchive.net/collection/cptac-luad/} . In accordance with our inclusion and exclusion rules, 53 WSIs were labeled as STAS and 47 were labeled as non-STAS. These images were subsequently used to assess the generalizability of our model.
+The external validation set includes pathological images from eight centers. The cohort from the Third Xiangya Hospital of Central South University (TXH-CSU) provided 304 slides from 68 patients diagnosed with STAS between 2022 and 2023. The cohort from Xiangya hospital of Central South University (XH-CSU) provided 155 WSIs from 127 patients diagnosed with STAS between 2022 and 2023. The cohort from the Affiliated Tumor Hospital of Zhengzhou University (TH-ZZU) provided 91 WSIs from 19 patients diagnosed with LUAD and STAS in 2023. The cohort from the First Affiliated Hospital of Nanhua University (FAH-NHU) selected 130 WSIs from 42 patients diagnosed with LUAD and STAS between 2021 and 2024. The cohort from Changsha Jingkai Hospital (CJH) selected 91 WSIs from 45 patients diagnosed with LUAD and STAS between 2023 and 2024. The cohort from Pingjiang County First People's Hospital (PCPH) selected 78 WSIs from 35 patients diagnosed with LUAD and STAS between 2019 and 2021. The TCGA_LUAD dataset includes 366 patients with 417 WSIs. The CPTAC_LUAD cohort includes 170 patients with 443 WSIs. In the validation cohorts, TCGA_LUAD and CPTAC_LUAD provided patient-related clinical and multi-omics data, offering valuable information for survival and mechanistic studies of STAS patients. For detailed statistical data, please refer to the appendix.
 
 ## Installation
 - Linux (Tested on Ubuntu 18.04)
