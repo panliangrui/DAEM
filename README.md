@@ -46,7 +46,7 @@
 - [Feature Preprocessing](#Feature-Preprocessing)
 - [Feature Extraction](#Feature-Extraction)
 - [Models](#Train-models)
-- [Train Models](#Train-models)
+- [Test WSI](#Test WSI)
 - [Datastes](#Datastes)
 - [Installation](#Installation)
 - [License](#license)
@@ -56,6 +56,7 @@
 ## Feature Preprocessing
 
 Use the pre-trained model for feature preprocessing and build the spatial topology of WSI.
+Upload the .svs file to the input folder
 
 ### Feature Extraction
 
@@ -64,10 +65,13 @@ Please refer to CTransPath: https://github.com/Xiyue-Wang/TransPath
 
 Feature extraction code reference project: https://github.com/mahmoodlab/CLAM
 ```markdown
-python create_patches_fp.py
+python create_patch_fp_256.py; create_patch_fp_512.py; run_wsi_inference.py
 ```
 ```markdown
-python extract_features_fp.py
+python extract_features_fp_256.py; extract_features_fp_512.py;  summarize_tme_features.py
+```
+```markdown
+python constract_graph_multi_view.py
 ```
 
 ## Models
@@ -81,7 +85,7 @@ Workflow of collection and organization of lung cancer STAS dataset, model train
 
 
 
-**Baseline MIL Methods**
+**Test WSI**
 
 This repository provides implementations and comparisons of various MIL-based methods for Whole Slide Image (WSI) classification.
 
