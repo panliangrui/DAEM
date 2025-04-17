@@ -73,11 +73,11 @@ python extract_features_fp.py
 ## Models
 **SMILE**
 
-  <a href="(https://github.com/panliangrui/IJCAI25/blob/main/flow.jpg)">
-    <img src="https://github.com/panliangrui/IJCAI25/blob/main/flow.jpg" width="800" height="400" />
+  <a href="(https://github.com/panliangrui/DAEM/blob/main/images/Figure1.jpg)">
+    <img src="https://github.com/panliangrui/DAEM/blob/main/images/Figure1.jpg" width="4563" height="5131" />
   </a>
 
-Overall workflow of the proposed SMILE approach. We process the given bag through a joint feature representation module to transform them into instance features. These features are then processed through a scale-adaptive attention module to obtain scaled bag-level feature representations. Finally, the final STAS prediction results are obtained through the classifier g.
+Workflow of collection and organization of lung cancer STAS dataset, model training and inference, and multi-center validation. a, Resection of lung tumor tissue. b, Digitization of FSs and PSs. c, Histopathology image slice processing, d, Pathologists’ triple cross-validation to annotate data. e, Extraction of multi-scale histopathology image features and parallel expert models to diagnose and localize STAS in histopathology images. f, Details of the expert module, where AMP1d is the AdaptiveMaxPool1d layer. g, Details of the classifier. h, Distribution and quantity of multi-center data.
 
 
 
