@@ -106,6 +106,8 @@ The external validation set includes pathological images from eight centers. The
 - NVIDIA GPU (Tested on a single Nvidia GeForce RTX 4090)
 - Python (3.7.11), h5py (2.10.0), opencv-python (4.1.2.30), PyTorch (1.10.1), torchvision (0.11.2), pytorch-lightning (1.5.10).
 
+Note: You need to put the files in https://drive.google.com/drive/folders/1hk_i-1D48j0UN7mdqsw788J7treLSFoQ?usp=drive_link into the distance folder,
+and put the folders in https://drive.google.com/drive/folders/1GC2EyO6PmYGEbkL15hqjfg0WfLZhs9sg?usp=drive_link, https://drive.google.com/drive/folders/1hk_i-1D48j0UN7mdqsw788J7treLSFoQ?usp=drive_link into the main project.
 
 ## License
 If you need the original histopathology image slides, please send a request to our email address. The email address will be announced after the paper is accepted. Thank you!
