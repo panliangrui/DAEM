@@ -5,7 +5,7 @@
     <img src="https://github.com/panliangrui/DAEM/blob/main/images/predict.png" width="800" height="400" />
   </a>
 
-  <h1>STAS(solid nests, micropapillary clusters, single cells)</h1>
+  <h1>STAS Diagnostic Platform(https://36.158.228.122:45727/)</h1>
 
   <p>
   Anonymous Author et al. is a developer helper.
@@ -35,7 +35,7 @@
   </div>
 </div>
 
-# SMILE: a Scale-aware Multiple Instance Learning Method for Multicenter STAS  Lung Lancer Histopathology Diagnosis
+# Diffusion Attention Expert Model for Predicting and Semi-automatic Localizing STAS in Lung Cancer Histopathological Images: A Multicenter Study
 
 ## Table of Contents
 
