@@ -116,6 +116,7 @@ The external validation set includes pathological images from eight centers. The
 Note: You need to put the files in https://drive.google.com/drive/folders/1hk_i-1D48j0UN7mdqsw788J7treLSFoQ?usp=drive_link into the distance folder,
 and put the folders in https://drive.google.com/drive/folders/1GC2EyO6PmYGEbkL15hqjfg0WfLZhs9sg?usp=drive_link, https://drive.google.com/drive/folders/1hk_i-1D48j0UN7mdqsw788J7treLSFoQ?usp=drive_link into the main project.
 
+Note: Due to data security issues, we recommend downloading our distance measurement tool and using it locally.
 ## License
 If you need the original histopathology image slides, please send a request to our email address. The email address will be announced after the paper is accepted. Thank you!
 
