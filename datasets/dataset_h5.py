@@ -16,81 +16,81 @@ from PIL import Image
 import h5py
 
 from random import randrange
-
+# -*- coding: utf-8 -*-
 def eval_transforms(pretrained=False):
-	if pretrained:
-		mean = (0.485, 0.456, 0.406)
-		std = (0.229, 0.224, 0.225)
+    if pretrained:
+        mean = (0.485, 0.456, 0.406)
+        std = (0.229, 0.224, 0.225)
 
-	else:
-		mean = (0.5,0.5,0.5)
-		std = (0.5,0.5,0.5)
+    else:
+        mean = (0.5,0.5,0.5)
+        std = (0.5,0.5,0.5)
 
-	trnsfrms_val = transforms.Compose(
-					[
-					 transforms.ToTensor(),
-					 transforms.Normalize(mean = mean, std = std)
-					]
-				)
+    trnsfrms_val = transforms.Compose(
+                    [
+                     transforms.ToTensor(),
+                     transforms.Normalize(mean = mean, std = std)
+                    ]
+                )
 
-	return trnsfrms_val
+    return trnsfrms_val
 
 class Whole_Slide_Bag(Dataset):
-	def __init__(self,
-		file_path,
-		pretrained=False,
-		custom_transforms=None,
-		target_patch_size=-1,
-		):
-		"""
-		Args:
-			file_path (string): Path to the .h5 file containing patched data.
-			pretrained (bool): Use ImageNet transforms
-			custom_transforms (callable, optional): Optional transform to be applied on a sample
-		"""
-		self.pretrained=pretrained
-		if target_patch_size > 0:
-			self.target_patch_size = (target_patch_size, target_patch_size)
-		else:
-			self.target_patch_size = None
+    def __init__(self,
+        file_path,
+        pretrained=False,
+        custom_transforms=None,
+        target_patch_size=-1,
+        ):
+        """
+        Args:
+            file_path (string): Path to the .h5 file containing patched data.
+            pretrained (bool): Use ImageNet transforms
+            custom_transforms (callable, optional): Optional transform to be applied on a sample
+        """
+        self.pretrained=pretrained
+        if target_patch_size > 0:
+            self.target_patch_size = (target_patch_size, target_patch_size)
+        else:
+            self.target_patch_size = None
 
-		if not custom_transforms:
-			self.roi_transforms = eval_transforms(pretrained=pretrained)
-		else:
-			self.roi_transforms = custom_transforms
+        if not custom_transforms:
+            self.roi_transforms = eval_transforms(pretrained=pretrained)
+        else:
+            self.roi_transforms = custom_transforms
 
-		self.file_path = file_path
+        self.file_path = file_path
 
-		with h5py.File(self.file_path, "r") as f:
-			dset = f['imgs']
-			self.length = len(dset)
+        with h5py.File(self.file_path, "r") as f:
+            dset = f['imgs']
+            self.length = len(dset)
 
-		self.summary()
-			
-	def __len__(self):
-		return self.length
+        self.summary()
 
-	def summary(self):
-		hdf5_file = h5py.File(self.file_path, "r")
-		dset = hdf5_file['imgs']
-		for name, value in dset.attrs.items():
-			print(name, value)
+    def __len__(self):
+        return self.length
 
-		print('pretrained:', self.pretrained)
-		print('transformations:', self.roi_transforms)
-		if self.target_patch_size is not None:
-			print('target_size: ', self.target_patch_size)
+    def summary(self):
+        hdf5_file = h5py.File(self.file_path, "r")
+        dset = hdf5_file['imgs']
+        for name, value in dset.attrs.items():
+            print(name, value)
 
-	def __getitem__(self, idx):
-		with h5py.File(self.file_path,'r') as hdf5_file:
-			img = hdf5_file['imgs'][idx]
-			coord = hdf5_file['coords'][idx]
-		
-		img = Image.fromarray(img)
-		if self.target_patch_size is not None:
-			img = img.resize(self.target_patch_size)
-		img = self.roi_transforms(img).unsqueeze(0)
-		return img, coord
+        print('pretrained:', self.pretrained)
+        print('transformations:', self.roi_transforms)
+        if self.target_patch_size is not None:
+            print('target_size: ', self.target_patch_size)
+
+    def __getitem__(self, idx):
+        with h5py.File(self.file_path,'r') as hdf5_file:
+            img = hdf5_file['imgs'][idx]
+            coord = hdf5_file['coords'][idx]
+
+        img = Image.fromarray(img)
+        if self.target_patch_size is not None:
+            img = img.resize(self.target_patch_size)
+        img = self.roi_transforms(img).unsqueeze(0)
+        return img, coord
 
 
 from skimage.measure import regionprops
@@ -117,171 +117,229 @@ def extract_features(mask, prob_map):
         })
     return features
 class Whole_Slide_Bag_FP(Dataset):
-	def __init__(self,
-		file_path,
-		wsi,
-		pretrained=False,
-		custom_transforms=None,
-		custom_downsample=1,
-		target_patch_size=-1
-		):
-		"""
-		Args:
-			file_path (string): Path to the .h5 file containing patched data.
-			pretrained (bool): Use ImageNet transforms
-			custom_transforms (callable, optional): Optional transform to be applied on a sample
-			custom_downsample (int): Custom defined downscale factor (overruled by target_patch_size)
-			target_patch_size (int): Custom defined image size before embedding
-		"""
-		self.pretrained=pretrained
-		self.wsi = wsi
-		if not custom_transforms:
-			self.roi_transforms = eval_transforms(pretrained=pretrained)
-		else:
-			self.roi_transforms = custom_transforms
+    def __init__(self,
+        file_path,
+        wsi,
+        pretrained=False,
+        custom_transforms=None,
+        custom_downsample=1,
+        target_patch_size=-1
+        ):
+        """
+        Args:
+            file_path (string): Path to the .h5 file containing patched data.
+            pretrained (bool): Use ImageNet transforms
+            custom_transforms (callable, optional): Optional transform to be applied on a sample
+            custom_downsample (int): Custom defined downscale factor (overruled by target_patch_size)
+            target_patch_size (int): Custom defined image size before embedding
+        """
+        self.pretrained=pretrained
+        self.wsi = wsi
+        if not custom_transforms:
+            self.roi_transforms = eval_transforms(pretrained=pretrained)
+        else:
+            self.roi_transforms = custom_transforms
 
-		self.file_path = file_path
+        self.file_path = file_path
 
-		with h5py.File(self.file_path, "r") as f:
-			dset = f['coords']
-			self.patch_level = f['coords'].attrs['patch_level']
-			self.patch_size = f['coords'].attrs['patch_size']
-			self.length = len(dset)
-			if target_patch_size > 0:
-				self.target_patch_size = (target_patch_size, ) * 2
-			elif custom_downsample > 1:
-				self.target_patch_size = (self.patch_size // custom_downsample, ) * 2
-			else:
-				self.target_patch_size = None
-		self.summary()
-			
-	def __len__(self):
-		return self.length
+        with h5py.File(self.file_path, "r") as f:
+            dset = f['coords']
+            self.patch_level = f['coords'].attrs['patch_level']
+            self.patch_size = f['coords'].attrs['patch_size']
+            self.length = len(dset)
+            if target_patch_size > 0:
+                self.target_patch_size = (target_patch_size, ) * 2
+            elif custom_downsample > 1:
+                self.target_patch_size = (self.patch_size // custom_downsample, ) * 2
+            else:
+                self.target_patch_size = None
+        self.summary()
 
-	def summary(self):
-		hdf5_file = h5py.File(self.file_path, "r")
-		dset = hdf5_file['coords']
-		for name, value in dset.attrs.items():
-			print(name, value)
+    def __len__(self):
+        return self.length
 
-		print('\nfeature extraction settings')
-		print('target patch size: ', self.target_patch_size)
-		print('pretrained: ', self.pretrained)
-		print('transformations: ', self.roi_transforms)
+    def summary(self):
+        hdf5_file = h5py.File(self.file_path, "r")
+        dset = hdf5_file['coords']
+        for name, value in dset.attrs.items():
+            print(name, value)
 
-	def __getitem__(self, idx):
-		with h5py.File(self.file_path,'r') as hdf5_file:
-			coord = hdf5_file['coords'][idx]
-		img = self.wsi.read_region(coord, self.patch_level, (self.patch_size, self.patch_size)).convert('RGB')
-		# ##获取细胞的特征
-		# image = img.resize((256,256))
-		# image =self.roi_transforms(image).unsqueeze(0)
-		# from models.DeepCMorph_model import DeepCMorph
-		# torch.backends.cudnn.deterministic = True
-		# device = torch.device("cuda")
-		# model = DeepCMorph(num_classes=41)
-		# # Loading model weights corresponding to the network trained on combined datasets
-		# # Possible 'dataset' values: TCGA, TCGA_REGULARIZED, CRC, COMBINED
-		# model.load_weights(dataset=None, path_to_checkpoints="J:\\CLAM-master\\models\\pretrained_models\\DeepCMorph_Datasets_Combined_41_classes_acc_8159.pth")
-		# model.to(device)
-		# model.eval()
-		# image = image.to(device)
-		#
-		# # Get the predicted class for a sample input image
-		# predictions = model(image)
-		# _, predicted_class = torch.max(predictions.data, 1)
-		#
-		# # Get feature vector of size 2560 for a sample input image
-		# features = model(image, return_features=True)
-		#
-		# # Get predicted segmentation and classification maps for a sample input image
-		# nuclei_segmentation_map, nuclei_classification_maps = model(image, return_segmentation_maps=True)
-		# from skimage.measure import regionprops, label
-		# from skimage.morphology import convex_hull_image
-		# nuclei_classification_maps= nuclei_classification_maps.squeeze().cpu().numpy()
-		# labeled_nuclei, num_nuclei = label(nuclei_classification_maps, return_num=True, connectivity=2)
-		#
-		# # 存储每个细胞核的特征
-		# nuclei_features = []
-		#
-		# for region in regionprops(labeled_nuclei):
-		# 	if region.area < 20:  # 忽略过小的细胞核
-		# 		continue
-		#
-		# 	# 核心特征提取
-		# 	coordinates = region.coords  # 细胞核中所有的像素坐标
-		# 	centroid = region.centroid  # 质心 (coordinate_x, coordinate_y)
-		# 	area = region.area  # 面积
-		# 	convex_image = convex_hull_image(region.image)
-		# 	convex_area = convex_image.sum()  # 凸包面积
-		# 	eccentricity = region.eccentricity  # 离心率
-		# 	extent = region.extent  # 范围
-		# 	filled_area = region.filled_area  # 填充区域
-		# 	major_axis_length = region.major_axis_length  # 主轴长度
-		# 	minor_axis_length = region.minor_axis_length  # 次轴长度
-		# 	orientation = region.orientation  # 方向
-		# 	perimeter = region.perimeter  # 周长
-		# 	solidity = region.solidity  # 密实度
-		# 	pa_ratio = region.major_axis_length / region.minor_axis_length  # 主次轴比
-		#
-		# 	# 通过质心获取分类标签
-		# 	centroid_y, centroid_x = np.round(centroid).astype(int)
-		# 	cell_type = classification_map[centroid_y, centroid_x]
-		#
-		# 	# 从概率图中获取细胞核的平均概率
-		# 	probability = np.mean(probability_map[coordinates[:, 0], coordinates[:, 1]])
-		#
-		# 	# 将所有特征存储到字典中
-		# 	nuclei_features.append({
-		# 		'coordinate_x': centroid_x,
-		# 		'coordinate_y': centroid_y,
-		# 		'cell_type': cell_type,
-		# 		'probability': probability,
-		# 		'area': area,
-		# 		'convex_area': convex_area,
-		# 		'eccentricity': eccentricity,
-		# 		'extent': extent,
-		# 		'filled_area': filled_area,
-		# 		'major_axis_length': major_axis_length,
-		# 		'minor_axis_length': minor_axis_length,
-		# 		'orientation': orientation,
-		# 		'perimeter': perimeter,
-		# 		'solidity': solidity,
-		# 		'pa_ratio': pa_ratio
-		# 	})
-		#
-		# # 转换为DataFrame并保存为CSV文件
-		# nuclei_df = pd.DataFrame(nuclei_features)
-		# nuclei_df.to_csv('cell_summary.csv', index=False)
-		#
-		# print(f"Extracted features for {len(nuclei_df)} nuclei and saved to 'cell_summary.csv'.")
-		# # # 转换为numpy格式
-		# # mask = nuclei_classification_maps.squeeze().cpu().numpy()
-		# # prob_map = nuclei_classification_maps.squeeze().cpu().numpy()
-		# #
-		# # # 提取细胞核特征
-		# # features = extract_features(mask, prob_map)
-		# #
-		# # # 加入所有特征
-		# # all_features=[]
-		# # all_features.extend(features)
+        print('\nfeature extraction settings')
+        print('target patch size: ', self.target_patch_size)
+        print('pretrained: ', self.pretrained)
+        print('transformations: ', self.roi_transforms)
+
+    def __getitem__(self, idx):
+        with h5py.File(self.file_path,'r') as hdf5_file:
+            coord = hdf5_file['coords'][idx]
+        img = self.wsi.read_region(coord, self.patch_level, (self.patch_size, self.patch_size)).convert('RGB')
 
 
-		if self.target_patch_size is not None:
-			img = img.resize(self.target_patch_size)
-		img = self.roi_transforms(img).unsqueeze(0)
-		return img, coord
+
+        if self.target_patch_size is not None:
+            img = img.resize(self.target_patch_size)
+        img = self.roi_transforms(img).unsqueeze(0)
+        return img, coord
+
+
+import h5py
+import numpy as np
+from PIL import Image
+from torch.utils.data import Dataset
+import torchstain
+# from dataset_modules.dataset_h5 import eval_transforms
+T_all=transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Lambda(lambda x: x * 255)
+        ])
+class Whole_Slide_Bag_FP_new(Dataset):
+    def __init__(self,
+                 file_path,
+                 wsi,
+                 pretrained=False,
+                 custom_transforms=None,
+                 custom_downsample=1,
+                 target_patch_size=-1,
+                 stain_method: str = None,
+                 stain_target_path: str = None
+        ):
+        """
+        Args:
+            file_path (string): Path to the .h5 file containing patched data.
+            wsi: OpenSlide WSI object
+            pretrained (bool): Use ImageNet transforms
+            custom_transforms (callable, optional): Optional transform to be applied on a sample
+            custom_downsample (int): Custom defined downscale factor (overruled by target_patch_size)
+            target_patch_size (int): Custom defined image size before embedding
+            stain_method (str): 'reinhard' | 'macenko' | 'vahadane'
+            stain_target_path (str): Path to target image for stain normalizer
+        """
+        self.pretrained = pretrained
+        self.wsi = wsi
+        # transforms
+        self.roi_transforms = custom_transforms if custom_transforms else eval_transforms(pretrained=pretrained)
+        # stain normalizer
+        self.stain_method = stain_method.lower() if stain_method else None
+
+
+        if self.stain_method and stain_target_path:
+            target = Image.open(stain_target_path).convert('RGB')
+            self.stain_target = np.array(target)
+            if self.stain_method == 'reinhard':
+                self.stainer = torchstain.normalizers.ReinhardNormalizer()
+            elif self.stain_method == 'macenko':
+                self.stainer = torchstain.normalizers.MacenkoNormalizer(backend='torch')#torchstain.MacenkoNormalizer()
+            elif self.stain_method == 'vahadane':
+                self.stainer = torchstain.normalizers.VahadaneNormalizer()
+            else:
+                raise ValueError(f"Unknown stain_method {stain_method}")
+            self.stainer.fit(T_all(self.stain_target))
+            # normalizer.fit(T(target))
+        else:
+            self.stainer = None
+        # h5 params
+        self.file_path = file_path
+        with h5py.File(self.file_path, 'r') as f:
+            dset = f['coords']
+            self.patch_level = f['coords'].attrs['patch_level']
+            self.patch_size = f['coords'].attrs['patch_size']
+            self.length = len(dset)
+            if target_patch_size > 0:
+                self.target_patch_size = (target_patch_size,) * 2
+            elif custom_downsample > 1:
+                self.target_patch_size = (self.patch_size // custom_downsample,) * 2
+            else:
+                self.target_patch_size = None
+        self.summary()
+
+    def __len__(self):
+        return self.length
+
+    def summary(self):
+        print(f"Dataset length: {self.length}")
+        print(f"Patch level: {self.patch_level}, Patch size: {self.patch_size}")
+        print(f"Target patch size: {self.target_patch_size}")
+        print(f"Pretrained: {self.pretrained}")
+        print(f"Stain method: {self.stain_method}")
+
+    def __getitem__(self, idx):
+        with h5py.File(self.file_path, 'r') as hdf5_file:
+            coord = hdf5_file['coords'][idx]
+        img = self.wsi.read_region(coord, self.patch_level, (self.patch_size, self.patch_size)).convert('RGB')
+        from histaugan.options import TestOptions
+        from histaugan.model import MD_multi
+        parser = TestOptions()
+        opts = parser.parse()
+        img1 = img
+        # model
+        print('\n--- load model ---')
+        model = MD_multi(opts)
+        model.setgpu(opts.gpu)
+        model.resume(opts.resume, train=False)
+        model.eval()
+        arr = np.array(img)
+        arr1 = Image.fromarray(arr)
+        arr1.save(os.path.join("M:\\STAS_2025_buchong\\xiangya2_feature", str(idx) + "yuanshi" + '.png'))
+        img = T_all(arr)#.cuda()
+        img = img.unsqueeze(0).cuda()
+        # model = model.cuda()
+        imgs = []
+        a = model.test_forward_random(img)
+        for i in range(1,opts.num_domains):
+            imgs.append(a[i])
+        from histaugan.saver import tensor2img
+        j=0
+        for img2 in zip(imgs):
+            img2 = tensor2img(img2)
+            img2 = Image.fromarray(img2)
+            img2.save(os.path.join("M:\\STAS_2025_buchong\\xiangya2_feature", str(idx) + str(j) +'.png'))
+            j = j+1
+
+        # apply stain normalization
+        if self.stainer:
+            arr = np.array(img1)
+            to_transform = T_all(arr)
+            image, H, E = self.stainer.normalize(I=to_transform, stains=True)
+            # 步骤1: 调整维度顺序为 (3, 256, 256) 以符合PyTorch的通道优先格式
+            image = image.permute(2, 0, 1).to(torch.uint8)
+            # 将张量转换为 PIL 图像以应用转换
+            img = transforms.ToPILImage()(image)
+
+            image1 = np.array(img)
+            # image1 = np.transpose(image1, (1, 2, 0))
+            image1 = Image.fromarray(image1)
+            image1.save(os.path.join("M:\\STAS_2025_buchong\\xiangya2_feature", str(idx) + "normal" + '.png'))
+
+        # resize
+        if self.target_patch_size:
+            img = img.resize(self.target_patch_size, Image.BILINEAR)
+        # to tensor
+        img_tensor = self.roi_transforms(img).unsqueeze(0)
+        return img_tensor, coord
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class Dataset_All_Bags(Dataset):
 
-	def __init__(self, csv_path):
-		self.df = pd.read_csv(csv_path)
-	
-	def __len__(self):
-		return len(self.df)
+    def __init__(self, csv_path):
+        self.df = pd.read_csv(csv_path,encoding='gbk')
 
-	def __getitem__(self, idx):
-		return self.df['slide_id'][idx]
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, idx):
+        return self.df['slide_id'][idx]
 
 
 
