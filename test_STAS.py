@@ -396,6 +396,19 @@ def main():
         random.seed(args.seed)
         torch.manual_seed(args.seed)
         cudnn.deterministic = True
+    
+
+
+
+    # 遍历每个折数进行训练
+    for fold in range(5):
+        if fold != 4:
+            continue
+        with open(log_path, 'a+') as log_txt:
+            info = '\n' + 'Fold at: ' + str(fold) + '\n'
+            log_txt.write(info)
+        print('Fold at: ' + str(fold))
+
     '''
     model 
     1. set require_grad    
@@ -411,18 +424,6 @@ def main():
         print('Training {}'.format(name))
         with open(log_path, 'a+') as log_txt:
             log_txt.write('\n Training {}'.format(name))
-
-
-
-    # 遍历每个折数进行训练
-    for fold in range(5):
-        if fold != 4:
-            continue
-        with open(log_path, 'a+') as log_txt:
-            info = '\n' + 'Fold at: ' + str(fold) + '\n'
-            log_txt.write(info)
-        print('Fold at: ' + str(fold))
-
 
         # sanity check begins here
         print('*******sanity check *********')
@@ -507,4 +508,5 @@ def main():
 
 
 if __name__ == '__main__':
+
     main()
