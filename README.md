@@ -5,7 +5,7 @@
     <img src="https://github.com/panliangrui/DAEM/blob/main/images/predict.png" width="800" height="400" />
   </a>
 
-  <h1>STAS Diagnostic Platform(https://frp-dad.com:45727/)</h1>
+  <h1>STAS Diagnostic Platform(frp-say.com:45727)</h1>
 
   <a href="(https://github.com/panliangrui/DAEM/blob/main/images/distance.png)">
     <img src="https://github.com/panliangrui/DAEM/blob/main/images/distance.png" width="800" height="400" />
